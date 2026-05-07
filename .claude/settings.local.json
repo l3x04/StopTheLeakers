@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node scripts/build-icon.js)",
+      "Bash(node -e \"console.log\\(require\\('png-to-ico'\\)\\)\")"
+    ]
+  }
+}

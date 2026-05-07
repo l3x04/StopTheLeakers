@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'" />
+    <title>StopTheLeakers</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="titlebar">
+      <div class="window-controls">
+        <button class="window-btn" id="win-min" aria-label="Minimize">
+          <svg width="13" height="13" viewBox="0 0 12 12"><path d="M2.5 6h7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </button>
+        <button class="window-btn" id="win-max" aria-label="Maximize">
+          <svg width="13" height="13" viewBox="0 0 12 12" class="ico-max"><rect x="2.5" y="2.5" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+          <svg width="13" height="13" viewBox="0 0 12 12" class="ico-restore"><rect x="3.5" y="2.5" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="2.5" y="3.5" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+        </button>
+        <button class="window-btn close" id="win-close" aria-label="Close">
+          <svg width="13" height="13" viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <rect x="3" y="7" width="1.8" height="4" rx="0.9" fill="white" opacity="0.85"/>
+            <rect x="6" y="4.5" width="1.8" height="9" rx="0.9" fill="white"/>
+            <rect x="9" y="2" width="1.8" height="14" rx="0.9" fill="white"/>
+            <rect x="12" y="6" width="1.8" height="6" rx="0.9" fill="white" opacity="0.95"/>
+          </svg>
+        </div>
+        <span class="brand-name">StopTheLeakers</span>
+      </div>
+
+      <div class="sidebar-group">
+        <div class="sidebar-section-title">Workspace</div>
+        <nav>
+          <button class="nav-item active" data-view="watermark">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"/>
+              <circle cx="6.75" cy="6.75" r=".75" fill="currentColor"/>
+            </svg>
+            Watermark
+          </button>
+          <button class="nav-item" data-view="scan">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m21 21-4.35-4.35"/>
+              <circle cx="11" cy="11" r="7"/>
+              <path d="M8 11h6"/>
+            </svg>
+            Scan
+          </button>
+          <button class="nav-item" data-view="history">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 3-6.7"/>
+              <path d="M3 4v5h5"/>
+              <path d="M12 7v5l3 2"/>
+            </svg>
+            History
+          </button>
+        </nav>
+      </div>
+    </aside>
+
+    <main class="content">
+      <section class="view active" id="view-watermark">
+        <h1>Watermark</h1>
+        <p class="muted">Embed a unique inaudible identifier into each copy. Tag every copy to a recipient — if a track leaks, drop it into Scan to find out who.</p>
+
+        <div class="card">
+          <div class="card-title">Source &amp; destination</div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Source track</label>
+              <button class="picker" id="pick-input" type="button">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                <span class="picker-label" data-empty="Choose audio file…">Choose audio file…</span>
+              </button>
+            </div>
+            <div class="form-row">
+              <label>Output folder</label>
+              <button class="picker" id="pick-output" type="button">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
+                <span class="picker-label" data-empty="Choose folder…">Choose folder…</span>
+              </button>
+            </div>
+            <div class="form-row inline">
+              <label>Copies</label>
+              <div class="stepper">
+                <button class="step-btn" id="copies-dec" type="button" aria-label="Decrease">−</button>
+                <input type="number" id="copies" value="1" min="1" max="50" />
+                <button class="step-btn" id="copies-inc" type="button" aria-label="Increase">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Recipients</div>
+          <p class="muted small">One copy per recipient. The name shows up when scanning a leaked track and becomes part of the output filename.</p>
+          <div class="recipients" id="recipients"></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" id="generate" disabled>Generate watermarks</button>
+        </div>
+      </section>
+
+      <section class="view" id="view-scan">
+        <h1>Scan</h1>
+        <p class="muted">Drop a track in. If it's been watermarked by this app, you'll see who it was sent to.</p>
+
+        <div class="card">
+          <div class="form-row">
+            <label>Track</label>
+            <button class="picker" id="pick-scan" type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              <span class="picker-label" data-empty="Choose track to scan…">Choose track to scan…</span>
+            </button>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="scan-btn" disabled>Scan</button>
+          </div>
+        </div>
+
+        <div class="card scan-result" id="scan-result-card" hidden></div>
+      </section>
+
+      <section class="view" id="view-history">
+        <h1>History</h1>
+        <p class="muted">Every watermarked copy you've generated. Click a row to open its file location.</p>
+        <div class="history-toolbar">
+          <input type="text" class="search" id="history-search" placeholder="Search recipient or track…" />
+          <span class="history-count muted" id="history-count">0 copies</span>
+        </div>
+        <div class="history-list" id="history-list"></div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

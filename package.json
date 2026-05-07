@@ -1,0 +1,51 @@
+{
+  "name": "stoptheleakers",
+  "version": "0.1.0",
+  "description": "Audio watermarking for DJ track distribution. Generates per-recipient watermarked copies and identifies leaks via scan.",
+  "main": "src/main/main.js",
+  "author": "Alexei",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "build:icon": "node scripts/build-icon.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^34.5.8",
+    "electron-builder": "^25.0.0",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.34.5"
+  },
+  "build": {
+    "appId": "com.alexei.stoptheleakers",
+    "productName": "StopTheLeakers",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/icon.ico",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/bin",
+        "to": "bin"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico",
+      "artifactName": "${productName}-${version}-setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.2.8"
+  }
+}
