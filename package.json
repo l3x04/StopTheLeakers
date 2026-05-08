@@ -1,6 +1,6 @@
 {
   "name": "stoptheleakers",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Audio watermarking for DJ track distribution. Generates per-recipient watermarked copies and identifies leaks via scan.",
   "main": "src/main/main.js",
   "author": "Alexei",
@@ -47,6 +47,7 @@
     }
   },
   "dependencies": {
-    "@fontsource/inter": "^5.2.8"
+    "@fontsource/inter": "^5.2.8",
+    "archiver": "^7.0.1"
   }
 }

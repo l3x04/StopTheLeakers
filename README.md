@@ -1,6 +1,16 @@
 # StopTheLeakers
 
-Audio watermarking tool for DJs and music producers. Generates per-recipient watermarked copies of a track and identifies leaks by scanning a suspected file.
+Audio watermarking tool for DJs and music producers. Generates per-recipient watermarked copies of a track (or a whole EP) and identifies leaks by scanning a suspected file.
+
+---
+
+## Features
+
+- **Single track or a whole EP** — pick individual files or point at a folder
+- **One ID per recipient across all their tracks** — a leak from *any* track in the delivery traces back to them
+- **Bundle as ZIPs** — produces one drag-and-droppable archive per recipient, ready to send
+- **Scan** — drop in a leaked or suspicious track, get the recipient name plus the rest of the delivery batch
+- **Local-only** — your watermarking key, recipient database, and outputs all stay on your machine
 
 ---
 
@@ -8,7 +18,7 @@ Audio watermarking tool for DJs and music producers. Generates per-recipient wat
 
 When you generate copies, the app makes microscopic adjustments to the actual audio — slightly nudging the volume of certain frequencies in a pattern that encodes a unique ID per recipient. The changes sit below what human ears can pick up, but a computer reading the file with the same key can detect the pattern and decode the ID.
 
-Every recipient receives a physically different audio file, each carrying their own ID baked into the music itself. When a track leaks, drop it into **Scan** and the app extracts the ID and tells you which recipient it was sent to.
+Every recipient receives a physically different audio file, each carrying their own ID baked into the music itself. When you watermark a multi-track delivery, the same ID is used across every track that recipient gets — so any leaked track, from anywhere in the delivery, points back to them. When something leaks, drop it into **Scan** and the app extracts the ID and tells you who it was sent to.
 
 ---
 
@@ -203,18 +213,22 @@ scripts/build-icon.js      Regenerates icon.ico from icon.svg
 
 ### How a watermark gets generated
 
-1. User picks an input audio file, output folder, copy count, and recipient names.
-2. For each copy, a fresh ID is allocated.
-3. If the input isn't already WAV, ffmpeg decodes it to a temp WAV (lossless intermediate).
-4. `audiowmark add --key master.key tempIn.wav tempOut.wav <hex>` embeds the ID.
-5. ffmpeg re-encodes the watermarked WAV to the original format.
-6. The mapping `{id, recipient, sourceTrack, outputPath, batchId, createdAt}` is appended to `%APPDATA%\stoptheleakers\db.json`.
+1. User picks one or more source tracks (or a folder), an output folder, recipient names, and an optional "Bundle as ZIPs" toggle.
+2. For each recipient, a single 128-bit ID is allocated — used across **all** of their tracks, so any leak from any track in the delivery resolves to them.
+3. For each track in the batch:
+   - If it isn't already WAV, ffmpeg decodes it to a temp WAV (lossless intermediate).
+   - `audiowmark add --key master.key tempIn.wav tempOut.wav <id>` embeds the recipient's ID.
+   - ffmpeg re-encodes the watermarked WAV back to the original format (MP3 → 320 kbps CBR; metadata copied via `-map_metadata`).
+   - Output goes to `<output>/<recipient-slug>/<original>_<recipient-slug>.<ext>`.
+4. If ZIP bundling is on, the recipient's folder is archived to `<output>/<recipient-slug>.zip` and the unzipped folder is removed.
+5. One DB record per (recipient × track) is appended to `%APPDATA%\stoptheleakers\db.json` — all sharing the same ID for that recipient.
 
 ### How a scan resolves a recipient
 
 1. `audiowmark get --json out.json --key master.key suspect.mp3` extracts the embedded ID.
-2. The renderer walks the JSON for the 32-char hex message.
-3. `db.findById(id)` returns the recipient record.
+2. The main process walks the JSON for the 32-char hex message.
+3. `db.findAllById(id)` returns every record sharing that ID — i.e. every track delivered to the matching recipient.
+4. If the scanned file's basename matches one of those records, the specific track is identified. Otherwise the scan still surfaces the recipient and the full delivery batch — a renamed leak is still a known leak.
 
 ### Persistence
 

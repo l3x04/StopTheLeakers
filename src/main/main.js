@@ -2,10 +2,42 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const crypto = require('node:crypto');
+const archiver = require('archiver');
 const audiowmark = require('./audiowmark');
 const db = require('./db');
 
 const AUDIO_EXTS = ['wav', 'flac', 'mp3', 'ogg'];
+
+function listAudioInDir(dirPath) {
+  try {
+    return fs
+      .readdirSync(dirPath)
+      .map((name) => path.join(dirPath, name))
+      .filter((p) => {
+        try { return fs.statSync(p).isFile(); } catch { return false; }
+      })
+      .filter((p) => AUDIO_EXTS.includes(path.extname(p).slice(1).toLowerCase()))
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
+function zipDirectory(sourceDir, outZipPath) {
+  return new Promise((resolve, reject) => {
+    const out = fs.createWriteStream(outZipPath);
+    const archive = archiver('zip', { zlib: { level: 6 } });
+    out.on('close', resolve);
+    archive.on('error', reject);
+    archive.pipe(out);
+    archive.directory(sourceDir, false);
+    archive.finalize();
+  });
+}
+
+function rmrf(p) {
+  try { fs.rmSync(p, { recursive: true, force: true }); } catch {}
+}
 
 function slugify(str) {
   const s = str
@@ -55,17 +87,27 @@ ipcMain.on('window:maximize-toggle', () => {
 });
 ipcMain.on('window:close', () => mainWindow?.close());
 
-ipcMain.handle('dialog:pickInput', async () => {
-  if (!mainWindow) return null;
+ipcMain.handle('dialog:pickInputFiles', async () => {
+  if (!mainWindow) return [];
   const res = await dialog.showOpenDialog(mainWindow, {
-    title: 'Choose source audio',
-    properties: ['openFile'],
+    title: 'Choose source audio files',
+    properties: ['openFile', 'multiSelections'],
     filters: [
       { name: 'Audio', extensions: AUDIO_EXTS },
       { name: 'All files', extensions: ['*'] },
     ],
   });
-  return res.canceled ? null : res.filePaths[0];
+  return res.canceled ? [] : res.filePaths;
+});
+
+ipcMain.handle('dialog:pickInputFolder', async () => {
+  if (!mainWindow) return [];
+  const res = await dialog.showOpenDialog(mainWindow, {
+    title: 'Choose folder of audio',
+    properties: ['openDirectory'],
+  });
+  if (res.canceled) return [];
+  return listAudioInDir(res.filePaths[0]);
 });
 
 ipcMain.handle('dialog:pickOutputDir', async () => {
@@ -77,10 +119,8 @@ ipcMain.handle('dialog:pickOutputDir', async () => {
   return res.canceled ? null : res.filePaths[0];
 });
 
-ipcMain.handle('watermark:generate', async (event, { inputPath, outputDir, recipients }) => {
+ipcMain.handle('watermark:generate', async (event, { inputPaths, outputDir, recipients, zip }) => {
   const keyPath = await audiowmark.ensureMasterKey();
-  const ext = path.extname(inputPath);
-  const inputBase = path.basename(inputPath, ext);
   const batchId = crypto.randomUUID();
   const usedSlugs = new Set();
   const results = [];
@@ -95,40 +135,81 @@ ipcMain.handle('watermark:generate', async (event, { inputPath, outputDir, recip
     }
     usedSlugs.add(slug);
 
-    const outputName = `${inputBase}_${slug}${ext}`;
-    const outputPath = path.join(outputDir, outputName);
     const id = crypto.randomBytes(16).toString('hex');
+    const recipientDir = path.join(outputDir, slug);
 
-    event.sender.send('watermark:progress', { index: i, status: 'running' });
+    event.sender.send('watermark:progress', {
+      index: i,
+      status: 'running',
+      tracksTotal: inputPaths.length,
+      tracksDone: 0,
+    });
 
     try {
-      await audiowmark.add(inputPath, outputPath, id, keyPath);
-      const record = {
-        id,
-        recipient,
-        sourceTrack: inputPath,
-        sourceTrackName: path.basename(inputPath),
-        outputPath,
-        outputName,
-        batchId,
-        createdAt: Date.now(),
-      };
-      db.addCopy(record);
+      fs.mkdirSync(recipientDir, { recursive: true });
+      const recordsForRecipient = [];
+
+      for (let t = 0; t < inputPaths.length; t++) {
+        const inputPath = inputPaths[t];
+        const ext = path.extname(inputPath);
+        const inputBase = path.basename(inputPath, ext);
+        const outputName = `${inputBase}_${slug}${ext}`;
+        const outputPath = path.join(recipientDir, outputName);
+
+        event.sender.send('watermark:progress', {
+          index: i,
+          status: 'running',
+          tracksTotal: inputPaths.length,
+          tracksDone: t,
+          currentTrack: path.basename(inputPath),
+        });
+
+        await audiowmark.add(inputPath, outputPath, id, keyPath);
+
+        const record = {
+          id,
+          recipient,
+          sourceTrack: inputPath,
+          sourceTrackName: path.basename(inputPath),
+          outputPath,
+          outputName,
+          batchId,
+          createdAt: Date.now(),
+        };
+        db.addCopy(record);
+        recordsForRecipient.push(record);
+      }
+
+      let zipPath = null;
+      if (zip) {
+        event.sender.send('watermark:progress', {
+          index: i,
+          status: 'zipping',
+          tracksTotal: inputPaths.length,
+          tracksDone: inputPaths.length,
+        });
+        zipPath = path.join(outputDir, `${slug}.zip`);
+        await zipDirectory(recipientDir, zipPath);
+        rmrf(recipientDir);
+      }
+
       event.sender.send('watermark:progress', {
         index: i,
         status: 'done',
-        outputName,
-        outputPath,
+        tracksTotal: inputPaths.length,
+        tracksDone: inputPaths.length,
         id,
+        zipPath,
+        recipientDir: zip ? null : recipientDir,
       });
-      results.push({ ok: true, ...record });
+      results.push({ ok: true, recipient, id, records: recordsForRecipient, zipPath });
     } catch (err) {
       event.sender.send('watermark:progress', {
         index: i,
         status: 'error',
         error: err.message,
       });
-      results.push({ ok: false, error: err.message });
+      results.push({ ok: false, recipient, error: err.message });
     }
   }
 
@@ -152,8 +233,19 @@ ipcMain.handle('scan:run', async (_e, filePath) => {
   const keyPath = await audiowmark.ensureMasterKey();
   const messageId = await audiowmark.extractMessage(filePath, keyPath);
   if (!messageId) return { found: false };
-  const record = db.findById(messageId);
-  return { found: true, messageId, record: record || null };
+  const allRecords = db.findAllById(messageId);
+  if (allRecords.length === 0) {
+    return { found: true, messageId, record: null, allRecords: [], matchedByFilename: false };
+  }
+  const scannedBase = path.basename(filePath).toLowerCase();
+  const exact = allRecords.find((r) => (r.outputName || '').toLowerCase() === scannedBase);
+  return {
+    found: true,
+    messageId,
+    record: exact || allRecords[0],
+    allRecords,
+    matchedByFilename: !!exact,
+  };
 });
 
 ipcMain.handle('history:list', async () => {

@@ -2,7 +2,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
   systemStatus: () => ipcRenderer.invoke('system:status'),
-  pickInput: () => ipcRenderer.invoke('dialog:pickInput'),
+  pickInputFiles: () => ipcRenderer.invoke('dialog:pickInputFiles'),
+  pickInputFolder: () => ipcRenderer.invoke('dialog:pickInputFolder'),
   pickOutputDir: () => ipcRenderer.invoke('dialog:pickOutputDir'),
   pickScanFile: () => ipcRenderer.invoke('dialog:pickScanFile'),
   generate: (params) => ipcRenderer.invoke('watermark:generate', params),

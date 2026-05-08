@@ -34,6 +34,11 @@ function findById(id) {
   return cache.copies.find((c) => c.id === id);
 }
 
+function findAllById(id) {
+  load();
+  return cache.copies.filter((c) => c.id === id);
+}
+
 function listAll() {
   load();
   return [...cache.copies].sort((a, b) => b.createdAt - a.createdAt);
@@ -44,4 +49,4 @@ function count() {
   return cache.copies.length;
 }
 
-module.exports = { dbPath, addCopy, findById, listAll, count };
+module.exports = { dbPath, addCopy, findById, findAllById, listAll, count };

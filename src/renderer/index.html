@@ -72,12 +72,24 @@
         <div class="card">
           <div class="card-title">Source &amp; destination</div>
           <div class="form-grid">
-            <div class="form-row">
-              <label>Source track</label>
-              <button class="picker" id="pick-input" type="button">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                <span class="picker-label" data-empty="Choose audio file…">Choose audio file…</span>
-              </button>
+            <div class="form-row source-row">
+              <label>Source tracks</label>
+              <div class="multi-source">
+                <div class="source-actions">
+                  <button class="picker-action" id="add-files" type="button">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                    Add files
+                  </button>
+                  <button class="picker-action" id="add-folder" type="button">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
+                    Add folder
+                  </button>
+                  <button class="picker-action subtle" id="clear-sources" type="button" hidden>Clear</button>
+                </div>
+                <div class="source-list" id="source-list">
+                  <div class="source-empty">No tracks selected</div>
+                </div>
+              </div>
             </div>
             <div class="form-row">
               <label>Output folder</label>
@@ -90,15 +102,29 @@
               <label>Copies</label>
               <div class="stepper">
                 <button class="step-btn" id="copies-dec" type="button" aria-label="Decrease">−</button>
-                <input type="number" id="copies" value="1" min="1" max="50" />
+                <input type="number" id="copies" value="1" min="0" max="50" />
                 <button class="step-btn" id="copies-inc" type="button" aria-label="Increase">+</button>
               </div>
+            </div>
+            <div class="form-row inline">
+              <label>Bundle as ZIPs</label>
+              <label class="toggle">
+                <input type="checkbox" id="zip-toggle" />
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="muted small toggle-hint">One <code>.zip</code> per recipient containing all their tracks.</span>
             </div>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-title">Recipients</div>
+          <div class="card-header">
+            <div class="card-title">Recipients</div>
+            <button class="picker-action" id="add-recipient" type="button">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              Add recipient
+            </button>
+          </div>
           <p class="muted small">One copy per recipient. The name shows up when scanning a leaked track and becomes part of the output filename.</p>
           <div class="recipients" id="recipients"></div>
         </div>

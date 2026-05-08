@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(node scripts/build-icon.js)",
-      "Bash(node -e \"console.log\\(require\\('png-to-ico'\\)\\)\")"
+      "Bash(node -e \"console.log\\(require\\('png-to-ico'\\)\\)\")",
+      "Bash(node -e \"const a = require\\('archiver'\\); console.log\\('typeof:', typeof a\\); console.log\\('keys:', Object.keys\\(a\\).slice\\(0,15\\)\\); console.log\\('default:', typeof a.default\\); console.log\\('create:', typeof a.create\\);\")",
+      "Bash(node -e \"const a = require\\('archiver'\\); console.log\\('typeof:', typeof a\\); console.log\\('callable test:', typeof a\\('zip'\\)\\);\")"
     ]
   }
 }
